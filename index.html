@@ -388,11 +388,25 @@
   <div class="modal">
     <h2>⚙️ JSONBin Settings</h2>
     <p class="modal-sub">
-      Paste your JSONBin <strong>Master Key</strong> below — a storage bin will be created automatically for Adiaha's answers.<br>
+      Paste your JSONBin <strong>Master Key</strong> below.<br>
       Get yours free at <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> → Account → API Keys.
     </p>
     <label>Master Key</label>
     <input type="password" id="cfg-api-key" placeholder="$2a$10$...">
+
+    <details id="existing-bin-toggle" style="margin-bottom:14px;">
+      <summary style="font-size:0.8rem;font-weight:800;color:var(--soft);cursor:pointer;user-select:none;letter-spacing:0.5px;">
+        🔗 Connect to an existing bin instead
+      </summary>
+      <div style="margin-top:10px;">
+        <label style="margin-bottom:5px;">Bin ID</label>
+        <input type="text" id="cfg-bin-id" placeholder="e.g. 6820c3f48a456b796..." style="margin-bottom:0;">
+        <p style="font-size:0.75rem;color:rgba(199,210,254,0.6);font-weight:600;margin-top:6px;font-style:italic;">
+          Leave blank to auto-create a new bin (first-time setup on Adiaha's device).
+        </p>
+      </div>
+    </details>
+
     <div class="modal-btns">
       <button id="btn-save-settings">Save &amp; Connect</button>
       <button id="btn-cancel">Cancel</button>
@@ -780,8 +794,9 @@
   var overlay = document.getElementById('modal-overlay');
 
   function openSettings() {
-    var { apiKey } = getCreds();
+    var { binId, apiKey } = getCreds();
     document.getElementById('cfg-api-key').value = apiKey;
+    document.getElementById('cfg-bin-id').value  = binId;
     document.getElementById('modal-status').textContent = '';
     document.getElementById('modal-status').className = '';
     overlay.classList.add('open');
@@ -801,7 +816,8 @@
   });
 
   document.getElementById('btn-save-settings').addEventListener('click', async function() {
-    var apiKey = document.getElementById('cfg-api-key').value.trim();
+    var apiKey      = document.getElementById('cfg-api-key').value.trim();
+    var manualBinId = document.getElementById('cfg-bin-id').value.trim();
     var ms = document.getElementById('modal-status');
 
     if (!apiKey) {
@@ -814,47 +830,60 @@
     ms.className = '';
 
     try {
-      var existingBinId = localStorage.getItem('jb_bin_id') || '';
+      var resolvedBinId = manualBinId;
 
-      // If we already have a bin stored for this key, just verify it
-      if (existingBinId) {
-        var check = await fetch('https://api.jsonbin.io/v3/b/' + existingBinId + '/latest', {
+      if (resolvedBinId) {
+        // Verify the provided bin ID works
+        var check = await fetch('https://api.jsonbin.io/v3/b/' + resolvedBinId + '/latest', {
           headers: { 'X-Master-Key': apiKey }
         });
-        if (!check.ok) existingBinId = ''; // bin doesn't match — create a new one
+        if (!check.ok) throw new Error('Bin not found or key mismatch (' + check.status + ')');
+
+      } else {
+        // Use stored bin ID if it exists and works
+        var storedBinId = localStorage.getItem('jb_bin_id') || '';
+        if (storedBinId) {
+          var recheck = await fetch('https://api.jsonbin.io/v3/b/' + storedBinId + '/latest', {
+            headers: { 'X-Master-Key': apiKey }
+          });
+          if (recheck.ok) {
+            resolvedBinId = storedBinId;
+          }
+        }
+
+        // Still no bin — create one
+        if (!resolvedBinId) {
+          ms.textContent = 'Creating your storage bin...';
+          var create = await fetch('https://api.jsonbin.io/v3/b', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Master-Key': apiKey,
+              'X-Bin-Name': 'adiaha-eiffel-tower'
+            },
+            body: JSON.stringify({ savedAt: null })
+          });
+          if (!create.ok) throw new Error('Could not create bin: ' + create.status);
+          var created = await create.json();
+          resolvedBinId = created.metadata.id;
+        }
       }
 
-      // Create a new bin if we don't have one yet
-      if (!existingBinId) {
-        ms.textContent = 'Creating your storage bin...';
-        var create = await fetch('https://api.jsonbin.io/v3/b', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': apiKey,
-            'X-Bin-Name': 'adiaha-eiffel-tower'
-          },
-          body: JSON.stringify({ savedAt: null })
-        });
-        if (!create.ok) throw new Error('Could not create bin: ' + create.status);
-        var created = await create.json();
-        existingBinId = created.metadata.id;
-      }
-
-      localStorage.setItem('jb_bin_id',  existingBinId);
+      localStorage.setItem('jb_bin_id',  resolvedBinId);
       localStorage.setItem('jb_api_key', apiKey);
 
-      ms.textContent = '✓ All set! Loading your data...';
+      // Show the bin ID so you can copy it to your own session
+      ms.innerHTML = '✓ Connected! Bin ID: <strong style="color:var(--gold);user-select:all;">' + resolvedBinId + '</strong>';
       ms.className = 'ok';
       checkConfigured();
 
       setTimeout(function() {
         closeSettings();
         loadData();
-      }, 900);
+      }, 2000);
 
     } catch (e) {
-      ms.textContent = '⚠ Could not connect — is your Master Key correct?';
+      ms.textContent = '⚠ ' + (e.message || 'Could not connect — check your Master Key and Bin ID.');
       ms.className = 'err';
     }
   });
