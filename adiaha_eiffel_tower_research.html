@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adiaha's Eiffel Tower Research</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #1a1a2e;
+    --deep: #16213e;
+    --card: #0f3460;
+    --accent: #e94560;
+    --gold: #f5a623;
+    --mint: #00d4aa;
+    --lavender: #a78bfa;
+    --white: #f0f4ff;
+    --soft: #c7d2fe;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--sky);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 55% 20%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 85%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 35%, rgba(255,255,255,0.3) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── SETTINGS GEAR ── */
+  #settings-btn {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 300;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--soft);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.3s;
+  }
+  #settings-btn:hover { background: rgba(255,255,255,0.16); transform: rotate(35deg); }
+
+  /* ── MODAL ── */
+  #modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 400;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--deep);
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 20px;
+    padding: 28px 24px 22px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+    animation: fadeUp 0.25s ease both;
+  }
+
+  .modal h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    color: var(--lavender);
+    margin-bottom: 6px;
+  }
+
+  .modal-sub {
+    font-size: 0.8rem;
+    color: var(--soft);
+    font-weight: 600;
+    margin-bottom: 20px;
+    line-height: 1.55;
+  }
+
+  .modal-sub a { color: var(--lavender); }
+
+  .modal label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--soft);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 5px;
+  }
+
+  .modal input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 13px;
+    color: var(--white);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    outline: none;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .modal input:focus { border-color: rgba(167,139,250,0.5); }
+
+  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+
+  #btn-save-settings {
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--lavender), #7c3aed);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  #btn-save-settings:hover { opacity: 0.88; }
+
+  #btn-cancel {
+    padding: 12px 18px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--soft);
+    cursor: pointer;
+  }
+  #btn-cancel:hover { background: rgba(255,255,255,0.1); }
+
+  #modal-status {
+    font-size: 0.8rem;
+    font-weight: 700;
+    min-height: 18px;
+    margin-top: 10px;
+    text-align: center;
+  }
+  #modal-status.ok  { color: var(--mint); }
+  #modal-status.err { color: var(--accent); }
+
+  /* ── NOT CONFIGURED BANNER ── */
+  #not-configured {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: rgba(233,69,96,0.1);
+    border: 1px solid rgba(233,69,96,0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #fca5a5;
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+  #not-configured.show { display: flex; }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 20px 16px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    padding: 36px 0 24px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .tower-emoji { font-size: 3.5rem; display: block; margin-bottom: 8px; }
+
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(245,166,35,0.35);
+  }
+
+  header p { color: var(--soft); font-size: 0.95rem; font-weight: 600; margin-top: 8px; }
+
+  .due-banner {
+    background: linear-gradient(135deg, rgba(245,166,35,0.15), rgba(233,69,96,0.1));
+    border: 1px solid rgba(245,166,35,0.3);
+    border-radius: 14px;
+    padding: 12px 18px;
+    margin: 0 0 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+  }
+  .due-banner .icon { font-size: 1.4rem; }
+  .due-banner .text { font-size: 0.92rem; color: var(--gold); }
+  .due-banner .text small { display: block; color: var(--soft); font-size: 0.78rem; font-weight: 600; margin-top: 2px; }
+
+  .progress-wrap {
+    background: var(--deep);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(167,139,250,0.15);
+  }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; color: var(--soft); margin-bottom: 7px; }
+  .progress-track { background: rgba(255,255,255,0.07); border-radius: 10px; height: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--mint), var(--lavender)); border-radius: 10px; transition: width 0.5s ease; }
+
+  #save-status {
+    text-align: right;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--soft);
+    margin-bottom: 22px;
+    min-height: 18px;
+  }
+  #save-status.saving { color: var(--gold); }
+  #save-status.saved  { color: var(--mint); }
+  #save-status.error  { color: var(--accent); }
+
+  /* ── SECTION CARDS ── */
+  .section-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 22px 22px 18px;
+    margin-bottom: 22px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .section-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+  }
+  .ic-gold    { background: rgba(245,166,35,0.15); }
+  .ic-mint    { background: rgba(0,212,170,0.15); }
+  .ic-lavender{ background: rgba(167,139,250,0.15); }
+  .ic-sky     { background: rgba(56,189,248,0.15); }
+  .ic-accent  { background: rgba(233,69,96,0.15); }
+
+  .section-title { font-family: 'Fredoka One', cursive; font-size: 1.2rem; }
+  .section-title.gold    { color: var(--gold); }
+  .section-title.mint    { color: var(--mint); }
+  .section-title.lavender{ color: var(--lavender); }
+  .section-title.sky     { color: #38bdf8; }
+  .section-title.accent  { color: var(--accent); }
+  .section-sub { font-size: 0.75rem; color: var(--soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
+
+  /* ── QUESTIONS ── */
+  .q-item { margin-bottom: 18px; }
+  .q-item:last-child { margin-bottom: 0; }
+
+  .q-label {
+    font-size: 0.92rem; font-weight: 800; color: var(--white);
+    margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.4;
+  }
+  .q-num {
+    background: rgba(255,255,255,0.08); border-radius: 6px;
+    padding: 1px 7px; font-size: 0.75rem; color: var(--soft);
+    font-weight: 800; flex-shrink: 0; margin-top: 2px;
+  }
+  .q-hint {
+    font-size: 0.78rem; color: rgba(199,210,254,0.6);
+    font-weight: 600; margin-bottom: 7px; margin-left: 30px; font-style: italic;
+  }
+
+  textarea, input[type="text"] {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 13px;
+    color: var(--white);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.92rem; font-weight: 600;
+    resize: vertical; outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    line-height: 1.5;
+  }
+  textarea:focus, input[type="text"]:focus { border-color: rgba(167,139,250,0.5); background: rgba(255,255,255,0.08); }
+  textarea.filled, input[type="text"].filled { border-color: rgba(0,212,170,0.35); background: rgba(0,212,170,0.05); }
+
+  textarea       { min-height: 80px; }
+  textarea.short { min-height: 56px; }
+  textarea.tall  { min-height: 110px; }
+
+  .tip {
+    background: rgba(245,166,35,0.08);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    padding: 9px 13px;
+    font-size: 0.82rem; color: #fcd34d; font-weight: 600;
+    margin-top: 16px;
+  }
+  .tip strong { color: var(--gold); }
+
+  /* ── DIAGRAM GRID ── */
+  .diagram-note {
+    background: rgba(56,189,248,0.08);
+    border: 1px dashed rgba(56,189,248,0.3);
+    border-radius: 12px; padding: 14px;
+    text-align: center; margin-bottom: 18px;
+  }
+  .diagram-note p { font-size: 0.88rem; color: #7dd3fc; font-weight: 700; line-height: 1.5; }
+
+  .labels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 480px) { .labels-grid { grid-template-columns: 1fr; } }
+
+  .label-item label { display: block; font-size: 0.8rem; font-weight: 800; color: var(--soft); margin-bottom: 5px; }
+
+  /* ── SAVE BUTTON ── */
+  #save-btn {
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--mint), #00b894);
+    border: none; border-radius: 14px;
+    font-family: 'Fredoka One', cursive; font-size: 1.2rem;
+    color: #0a2a22; cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-top: 6px;
+  }
+  #save-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+  #save-status-bottom {
+    text-align: center; font-size: 0.82rem; font-weight: 700;
+    min-height: 20px; margin-top: 10px;
+  }
+  #save-status-bottom.saving { color: var(--gold); }
+  #save-status-bottom.saved  { color: var(--mint); }
+  #save-status-bottom.error  { color: var(--accent); }
+
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+
+<!-- GEAR BUTTON -->
+<button id="settings-btn" title="JSONBin Settings">⚙️</button>
+
+<!-- SETTINGS MODAL -->
+<div id="modal-overlay">
+  <div class="modal">
+    <h2>⚙️ JSONBin Settings</h2>
+    <p class="modal-sub">
+      Paste your JSONBin <strong>Master Key</strong> below — a storage bin will be created automatically for Adiaha's answers.<br>
+      Get yours free at <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> → Account → API Keys.
+    </p>
+    <label>Master Key</label>
+    <input type="password" id="cfg-api-key" placeholder="$2a$10$...">
+    <div class="modal-btns">
+      <button id="btn-save-settings">Save &amp; Connect</button>
+      <button id="btn-cancel">Cancel</button>
+    </div>
+    <div id="modal-status"></div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+
+  <header>
+    <span class="tower-emoji">🗼</span>
+    <h1>Eiffel Tower Research</h1>
+    <p>Fill in each section as you find the answers — your work saves automatically!</p>
+  </header>
+
+  <div id="not-configured">
+    ⚠️ <span>JSONBin not set up yet — tap ⚙️ in the top-right to add your credentials so your answers are saved.</span>
+  </div>
+
+  <div class="due-banner">
+    <div class="icon">📅</div>
+    <div class="text">
+      Due: Monday, 11th May
+      <small>Research today → Slides tomorrow with Dad 🎯</small>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Research Progress</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <div id="save-status">Loading...</div>
+
+  <!-- PART 1 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-icon ic-gold">🏛️</div>
+      <div>
+        <div class="section-title gold">Part 1 — Identity &amp; Location</div>
+        <div class="section-sub">Who, What, Where</div>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q1</span>What is the full official name of the structure?</div>
+      <input type="text" id="q1" placeholder="Write the full name here...">
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q2</span>What city and country is it located in?</div>
+      <input type="text" id="q2" placeholder="City, Country...">
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q3</span>In what year was it built, and how many years ago is that from 2025?</div>
+      <div class="q-hint">Do the maths yourself — subtract the year built from 2025!</div>
+      <input type="text" id="q3" placeholder="Year built: ___  |  That is ___ years ago">
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q4</span>Who designed and built it, and what big event was it built for?</div>
+      <textarea id="q4" class="short" placeholder="It was designed by... and built for..."></textarea>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q5</span>Why is the Eiffel Tower famous today — what makes it special or iconic?</div>
+      <textarea id="q5" class="short" placeholder="Today the Eiffel Tower is famous because..."></textarea>
+    </div>
+  </div>
+
+  <!-- PART 2 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-icon ic-mint">🧱</div>
+      <div>
+        <div class="section-title mint">Part 2 — Building Materials</div>
+        <div class="section-sub">What it is made of and how</div>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q6</span>What is the Eiffel Tower mainly made of?</div>
+      <div class="q-hint">It is a metal — but which specific type?</div>
+      <input type="text" id="q6" placeholder="The main material is...">
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q7</span>How many individual metal pieces make up the structure, and how are they held together?</div>
+      <div class="q-hint">Look up rivets — special metal pins used to join pieces together</div>
+      <textarea id="q7" class="short" placeholder="The structure is made of ___ pieces, joined together by..."></textarea>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q8</span>The tower is regularly repainted — why is this important for iron, and how often does it happen?</div>
+      <div class="q-hint">Think about what happens to metal when it gets wet and is left unprotected</div>
+      <textarea id="q8" class="short" placeholder="Painting is important because iron can... It is repainted every..."></textarea>
+    </div>
+
+    <div class="tip">
+      <strong>🔍 Search tip:</strong> Try "Eiffel Tower construction materials" and "how many rivets Eiffel Tower"
+    </div>
+  </div>
+
+  <!-- PART 3 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-icon ic-lavender">⚡</div>
+      <div>
+        <div class="section-title lavender">Part 3 — Forces &amp; Engineering</div>
+        <div class="section-sub">The science of why it stands</div>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q9</span>What is the main natural force the Eiffel Tower has to resist every day?</div>
+      <div class="q-hint">Think about what affects tall, exposed structures most — especially in a city like Paris</div>
+      <input type="text" id="q9" placeholder="The main force is...">
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q10</span>How much does the top of the tower actually sway in strong wind, and in which direction?</div>
+      <div class="q-hint">Search "Eiffel Tower sway wind" — the distance might surprise you!</div>
+      <input type="text" id="q10" placeholder="In strong wind, the top moves up to ___ cm, away from...">
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q11</span>The tower uses a lattice (criss-cross) design instead of solid metal walls. How does this help it survive wind?</div>
+      <div class="q-hint">Imagine holding a solid tray flat in the wind vs. a wire rack — which does wind push harder?</div>
+      <textarea id="q11" placeholder="The lattice design helps because wind can... A solid wall would..."></textarea>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q12</span>Heat is also a force — how does the iron change on a very hot day, and by how much?</div>
+      <div class="q-hint">Search "Eiffel Tower thermal expansion" — metals expand when heated!</div>
+      <textarea id="q12" class="short" placeholder="On a hot sunny day, the iron expands and the tower grows by about..."></textarea>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q13</span>The four legs are spread very wide at the base. Why does a wide base make a tall structure more stable?</div>
+      <div class="q-hint">Balance a book on one finger vs. your whole hand — which is easier?</div>
+      <textarea id="q13" placeholder="A wide base makes the tower stable because..."></textarea>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">Q14</span>In your own words: what makes the Eiffel Tower strong enough to still be standing after 130+ years?</div>
+      <div class="q-hint">This is YOUR summary — use everything you learned in Q9–Q13, like explaining to a friend</div>
+      <textarea id="q14" class="tall" placeholder="The Eiffel Tower has stood for so long because..."></textarea>
+    </div>
+
+    <div class="tip">
+      <strong>🔍 Search tip:</strong> Try "Eiffel Tower engineering facts" and "why doesn't the Eiffel Tower fall over"
+    </div>
+  </div>
+
+  <!-- PART 4 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-icon ic-sky">✏️</div>
+      <div>
+        <div class="section-title sky">Part 4 — Diagram Labels</div>
+        <div class="section-sub">Plan your drawing before you sketch it</div>
+      </div>
+    </div>
+
+    <div class="diagram-note">
+      <p>🗼 Find a clear side-view photo of the Eiffel Tower, then use this section to plan what each part does — so your labels are ready when you draw!</p>
+    </div>
+
+    <div class="labels-grid">
+      <div class="label-item">
+        <label>① Foundations / Pillars (underground)</label>
+        <textarea class="short" id="d1" placeholder="The foundations hold the tower by..."></textarea>
+      </div>
+      <div class="label-item">
+        <label>② Four Wide Legs (Base)</label>
+        <textarea class="short" id="d2" placeholder="The legs are spread wide to..."></textarea>
+      </div>
+      <div class="label-item">
+        <label>③ Lattice Iron Framework</label>
+        <textarea class="short" id="d3" placeholder="The criss-cross design allows..."></textarea>
+      </div>
+      <div class="label-item">
+        <label>④ First Floor Platform</label>
+        <textarea class="short" id="d4" placeholder="The first floor is ___ metres up and is used for..."></textarea>
+      </div>
+      <div class="label-item">
+        <label>⑤ Second Floor Platform</label>
+        <textarea class="short" id="d5" placeholder="The second floor is where..."></textarea>
+      </div>
+      <div class="label-item">
+        <label>⑥ Antenna / Top Spire</label>
+        <textarea class="short" id="d6" placeholder="The antenna at the top is used for..."></textarea>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>💡 Tip:</strong> Search "Eiffel Tower diagram labeled parts" for reference images to guide your drawing.
+    </div>
+  </div>
+
+  <!-- PART 5 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-icon ic-accent">⭐</div>
+      <div>
+        <div class="section-title accent">Part 5 — Cool Facts &amp; Sources</div>
+        <div class="section-sub">For your slides — wow the class!</div>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">F1</span>Write 3 facts you found really surprising or interesting:</div>
+      <textarea id="f1" class="tall" placeholder="1. I found it surprising that...&#10;2. Another cool fact is...&#10;3. I also discovered that..."></textarea>
+    </div>
+
+    <div class="q-item">
+      <div class="q-label"><span class="q-num">F2</span>Where did you find your information? List the websites or books you used:</div>
+      <textarea id="f2" class="short" placeholder="Sources I used:&#10;1. &#10;2. &#10;3. "></textarea>
+    </div>
+  </div>
+
+  <button id="save-btn">💾 Save My Research</button>
+  <div id="save-status-bottom"></div>
+
+</div><!-- end .container -->
+
+<script>
+(function () {
+  'use strict';
+
+  const ALL_FIELDS = [
+    'q1','q2','q3','q4','q5',
+    'q6','q7','q8',
+    'q9','q10','q11','q12','q13','q14',
+    'd1','d2','d3','d4','d5','d6',
+    'f1','f2'
+  ];
+
+  let saveTimer = null;
+
+  // ── Credentials ──────────────────────────────────
+  function getCreds() {
+    return {
+      binId:  localStorage.getItem('jb_bin_id')  || '',
+      apiKey: localStorage.getItem('jb_api_key') || ''
+    };
+  }
+
+  function isConfigured() {
+    const { binId, apiKey } = getCreds();
+    return binId.length > 0 && apiKey.length > 0;
+  }
+
+  // ── Status helpers ───────────────────────────────
+  function setStatus(msg, type) {
+    ['save-status', 'save-status-bottom'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      el.className = type || '';
+    });
+  }
+
+  // ── Progress ─────────────────────────────────────
+  function updateProgress() {
+    var filled = ALL_FIELDS.filter(function(id) {
+      var el = document.getElementById(id);
+      return el && el.value.trim().length > 0;
+    }).length;
+    var pct = Math.round((filled / ALL_FIELDS.length) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+  }
+
+  function markFilled(el) {
+    el.classList.toggle('filled', el.value.trim().length > 0);
+    updateProgress();
+  }
+
+  function scheduleSave() {
+    clearTimeout(saveTimer);
+    setStatus('Unsaved changes...', 'saving');
+    saveTimer = setTimeout(saveData, 3000);
+  }
+
+  // ── Wire up all fields ───────────────────────────
+  ALL_FIELDS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function() {
+      markFilled(el);
+      scheduleSave();
+    });
+  });
+
+  // ── Collect / Populate ───────────────────────────
+  function collectData() {
+    var data = { savedAt: new Date().toISOString() };
+    ALL_FIELDS.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) data[id] = el.value;
+    });
+    return data;
+  }
+
+  function populateData(data) {
+    ALL_FIELDS.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && data[id] !== undefined) {
+        el.value = data[id];
+        markFilled(el);
+      }
+    });
+    updateProgress();
+  }
+
+  // ── Save / Load ──────────────────────────────────
+  async function saveData() {
+    clearTimeout(saveTimer);
+    if (!isConfigured()) {
+      setStatus('⚠ Tap ⚙️ to set up JSONBin first', 'error');
+      return;
+    }
+    var { binId, apiKey } = getCreds();
+    setStatus('Saving...', 'saving');
+    try {
+      var resp = await fetch('https://api.jsonbin.io/v3/b/' + binId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': apiKey },
+        body: JSON.stringify(collectData())
+      });
+      if (!resp.ok) throw new Error();
+      setStatus('✓ Saved at ' + new Date().toLocaleTimeString(), 'saved');
+    } catch (e) {
+      setStatus('⚠ Could not save — check your internet connection', 'error');
+    }
+  }
+
+  async function loadData() {
+    if (!isConfigured()) {
+      setStatus('Tap ⚙️ to enter your JSONBin credentials', '');
+      return;
+    }
+    var { binId, apiKey } = getCreds();
+    setStatus('Loading...', 'saving');
+    try {
+      var resp = await fetch('https://api.jsonbin.io/v3/b/' + binId + '/latest', {
+        headers: { 'X-Master-Key': apiKey }
+      });
+      if (!resp.ok) throw new Error();
+      var json = await resp.json();
+      if (json.record && Object.keys(json.record).length > 1) {
+        populateData(json.record);
+        var when = json.record.savedAt
+          ? new Date(json.record.savedAt).toLocaleString()
+          : 'earlier';
+        setStatus('✓ Loaded — last saved ' + when, 'saved');
+      } else {
+        setStatus('Ready — start filling in your answers!', '');
+      }
+    } catch (e) {
+      setStatus('Could not load saved data — you can still fill in answers', 'error');
+    }
+  }
+
+  // ── Not-configured banner ────────────────────────
+  function checkConfigured() {
+    var banner = document.getElementById('not-configured');
+    if (isConfigured()) {
+      banner.classList.remove('show');
+    } else {
+      banner.classList.add('show');
+    }
+  }
+
+  // ── Settings modal ───────────────────────────────
+  var overlay = document.getElementById('modal-overlay');
+
+  function openSettings() {
+    var { apiKey } = getCreds();
+    document.getElementById('cfg-api-key').value = apiKey;
+    document.getElementById('modal-status').textContent = '';
+    document.getElementById('modal-status').className = '';
+    overlay.classList.add('open');
+  }
+
+  function closeSettings() {
+    overlay.classList.remove('open');
+  }
+
+  document.getElementById('settings-btn').addEventListener('click', openSettings);
+  document.getElementById('not-configured').addEventListener('click', openSettings);
+  document.getElementById('btn-cancel').addEventListener('click', closeSettings);
+  document.getElementById('save-btn').addEventListener('click', saveData);
+
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeSettings();
+  });
+
+  document.getElementById('btn-save-settings').addEventListener('click', async function() {
+    var apiKey = document.getElementById('cfg-api-key').value.trim();
+    var ms = document.getElementById('modal-status');
+
+    if (!apiKey) {
+      ms.textContent = 'Please enter your Master Key.';
+      ms.className = 'err';
+      return;
+    }
+
+    ms.textContent = 'Connecting...';
+    ms.className = '';
+
+    try {
+      var existingBinId = localStorage.getItem('jb_bin_id') || '';
+
+      // If we already have a bin stored for this key, just verify it
+      if (existingBinId) {
+        var check = await fetch('https://api.jsonbin.io/v3/b/' + existingBinId + '/latest', {
+          headers: { 'X-Master-Key': apiKey }
+        });
+        if (!check.ok) existingBinId = ''; // bin doesn't match — create a new one
+      }
+
+      // Create a new bin if we don't have one yet
+      if (!existingBinId) {
+        ms.textContent = 'Creating your storage bin...';
+        var create = await fetch('https://api.jsonbin.io/v3/b', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': apiKey,
+            'X-Bin-Name': 'adiaha-eiffel-tower'
+          },
+          body: JSON.stringify({ savedAt: null })
+        });
+        if (!create.ok) throw new Error('Could not create bin: ' + create.status);
+        var created = await create.json();
+        existingBinId = created.metadata.id;
+      }
+
+      localStorage.setItem('jb_bin_id',  existingBinId);
+      localStorage.setItem('jb_api_key', apiKey);
+
+      ms.textContent = '✓ All set! Loading your data...';
+      ms.className = 'ok';
+      checkConfigured();
+
+      setTimeout(function() {
+        closeSettings();
+        loadData();
+      }, 900);
+
+    } catch (e) {
+      ms.textContent = '⚠ Could not connect — is your Master Key correct?';
+      ms.className = 'err';
+    }
+  });
+
+  // ── Init ─────────────────────────────────────────
+  checkConfigured();
+  loadData();
+
+})();
+</script>
+</body>
+</html>
